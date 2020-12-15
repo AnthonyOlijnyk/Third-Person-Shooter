@@ -16,8 +16,11 @@ class SIMPLESHOOTER_API AShooterAIController : public AAIController
 	
 private:
 
+	//UPROPERTY(EditAnywhere)
+	//float AcceptanceRadius = 200.f;
+
 	UPROPERTY(EditAnywhere)
-	float AcceptanceRadius = 200.f;
+	class UBehaviorTree* AIBehavior;
 
 public:
 

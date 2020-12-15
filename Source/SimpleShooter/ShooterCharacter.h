@@ -37,13 +37,14 @@ private:
 	void Jump();
 	void LookUpRate(float AxisValue);
 	void LookRightRate(float AxisValue);
-	void Shoot();
 
 public:
 	// Sets default values for this character's properties
 	AShooterCharacter();
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const & DamageEvent, class AController * EventInstigator, AActor * DamageCauser) override;
+
+	void Shoot();
 
 	UFUNCTION(BlueprintPure)
 	bool IsDead() const;
