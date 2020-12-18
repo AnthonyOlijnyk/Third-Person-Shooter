@@ -37,44 +37,55 @@ void AGun::Tick(float DeltaTime)
 void AGun::PullTrigger()
 {
 	UGameplayStatics::SpawnEmitterAttached(MuzzleFlash, Mesh, TEXT("MuzzleFlashSocket"));
-
-	APawn* Owner = Cast<APawn>(GetOwner());
-	
-	if(!Owner)
-	{
-		return;
-	}
-
-	AController* OwnerController = Owner->GetController();
-
-	if(!OwnerController)
-	{
-		return;
-	}
-
-	FVector Location;
-	FRotator Rotation;
-	OwnerController->GetPlayerViewPoint(Location, Rotation);
-
-	FVector End = Location + Rotation.Vector() * MaxRange;
+	UGameplayStatics::SpawnSoundAttached(MuzzleSound, Mesh, TEXT("MuzzleFlashSocket"));
 
 	FHitResult Hit;
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
-	Params.AddIgnoredActor(GetOwner());
-	bool bSuccess = GetWorld()->LineTraceSingleByChannel(Hit, Location, End, ECollisionChannel::ECC_GameTraceChannel1, Params);
-
+	FVector ShotDirection;
+	bool bSuccess = GunTrace(Hit, ShotDirection);
 	if(bSuccess)
 	{
-		FVector ShotDirection = -Rotation.Vector();
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, Hit.Location, ShotDirection.Rotation());
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), ImpactSound, Hit.Location);
+
 		AActor* HitActor = Hit.GetActor();
 
 		if(HitActor)
 		{
 			FPointDamageEvent DamageEvent(Damage, Hit, ShotDirection, nullptr);
-			HitActor->TakeDamage(Damage, DamageEvent, OwnerController, this);
+			HitActor->TakeDamage(Damage, DamageEvent, GetOwnerController(), this);
 		}
 	}
+}
+
+bool AGun::GunTrace(FHitResult& Hit, FVector& ShotDirection)
+{
+	AController* OwnerController = GetOwnerController();	
+	if(!OwnerController)
+	{
+		return false;
+	}
+	FVector Location;
+	FRotator Rotation;
+	OwnerController->GetPlayerViewPoint(Location, Rotation);
+	ShotDirection = -Rotation.Vector();
+
+	FVector End = Location + Rotation.Vector() * MaxRange;
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	Params.AddIgnoredActor(GetOwner());
+	return GetWorld()->LineTraceSingleByChannel(Hit, Location, End, ECollisionChannel::ECC_GameTraceChannel1, Params);
+}
+
+AController* AGun::GetOwnerController() const
+{
+	APawn* Owner = Cast<APawn>(GetOwner());
+	
+	if(!Owner)
+	{
+		return nullptr;
+	}
+
+	return Owner->GetController();
 }
 
